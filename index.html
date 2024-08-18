@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Lingo</title>
+</head>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+.container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    text-align: center;
+}
+
+h2 {
+    text-align: center;
+}
+h3 {
+    text-align: center;
+}
+.input-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+#language-select {
+    flex-grow: 1;
+    margin-left: 42.5%;
+    text-align: center;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+#about {
+    animation: slideRight 3s forwards;
+}
+
+@keyframes slideRight {
+    from {
+        transform: translateX(-100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+.custom-select {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url('dropdown-icon.png'); /* Add your custom arrow icon here */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    padding-right: 25px; /* Adjust as needed */
+}
+
+</style>
+<body>
+    <h1>Cross-Lingo</h1>
+    <h3>Select the output language from the drop down menu below the input language is auto detected by the system you can speak any language as a input which are available in the menu</h3>
+<select id="language-select" class="custom-select">
+    <option value="en">English</option>
+    <option value="hi">Hindi</option>
+    <option value="mr">Marathi</option>
+    <option value="gu">Gujarati</option>
+    <option value="kn">Kannada</option>
+    <option value="ta">Tamil</option>
+    <option value="fr">French</option>
+    <option value="es">Spannish</option>
+    <option value="de">German</option>
+    <!-- Add other language options -->
+</select>
+    <button id="start-btn">Submit</button>
+    <button id="stop-btn">Speak</button>
+    <h2><div id="listen"></div></h2>
+    <h1><div id="translated-text"></div></h1>
+	<div><h2>Say 'EXIT' TO STOP</h2></div>
+    <div id="about">
+    <h2>Developed by:-</h2>
+	<h3>Dev Khatanhar </h3>
+	<h3>Ashwin Khubchandani </h3>
+	<h3>Aakash Kulthia </h3>
+    </div>
+
+    <script>
+        const languageSelect = document.getElementById('language-select');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const translatedText = document.getElementById('translated-text');
+        const listening = document.getElementById('listen');
+
+
+        let mediaRecorder;
+        let chunks = [];
+
+        startBtn.addEventListener('click', startRecording);
+        stopBtn.addEventListener('click', stopRecording);
+
+        function startRecording() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    mediaRecorder = new MediaRecorder(stream);
+                    mediaRecorder.ondataavailable = e => {
+                        chunks.push(e.data);
+                    };
+                    mediaRecorder.onstop = () => {
+                        const blob = new Blob(chunks, { type: 'audio/webm' });
+                        const audioUrl = URL.createObjectURL(blob);
+                        const formData = new FormData();
+                        formData.append('audio', blob);
+                        formData.append('targetLang', languageSelect.value);
+
+                        fetch('/translate', {
+                            method: 'POST',
+                            body: formData
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            translatedText.textContent = data.translatedText;
+                            playAudio(data.audio);
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                        });
+                    };
+                    mediaRecorder.start();
+                })
+                .catch(err => {
+                    console.error('Error accessing microphone:', err);
+                });
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+	    listening.textContent = "Listening...";
+        }
+    </script>
+</body>
+</html>

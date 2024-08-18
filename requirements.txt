@@ -1,0 +1,3 @@
+Run the following command to install all the required libraries:-
+
+" pip install Flask deep-translator gtts SpeechRecognition pygame "
